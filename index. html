@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Package Tracking</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Leaflet -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+  </script>
+
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; }
+    #map { height: 100vh; width: 100vw; }
+
+    .info {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: white;
+      padding: 10px 14px;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      z-index: 999;
+      font-size: 14px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="info">
+  📦 Status: <span id="status">In transit</span><br>
+  ETA: <span id="eta">30 mins</span>
+</div>
+
+<div id="map"></div>
+
+<script>
+  // START & END POINTS
+  const start = [6.5244, 3.3792];   // Lagos
+  const end = [34.0522, -118.2437];  // Los Angeles
+
+  // TOTAL TRAVEL TIME IN MINUTES
+  const totalMinutes = 300;  // Demo speed (~5 hours)
+
+  // MAP SETUP
+  const map = L.map('map').setView([20, -50], 2); // Initial world view
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+
+  // ROUTE LINE (DOTTED)
+  const route = L.polyline([start, end], {
+    color: 'blue',
+    dashArray: '10, 10',  // dotted line
+    weight: 4
+  }).addTo(map);
+
+  // PACKAGE ICON
+  const packageIcon = L.icon({
+    iconUrl: 'https://cdn-icons-png.flaticon.com/512/2838/2838912.png', // 📦 icon
+    iconSize: [40, 40],
+    iconAnchor: [20, 20]
+  });
+
+  const marker = L.marker(start, { icon: packageIcon }).addTo(map);
+
+  // DESTINATION PIN (Static)
+  const destPin = L.marker(end).addTo(map)
+    .bindPopup("Destination: Los Angeles")
+    .openPopup();
+
+  // Always "In Transit"
+  document.getElementById("status").innerText = "In transit";
+
+  let progress = 0;
+  const intervalTime = 1000; // 1 second
+  const steps = totalMinutes * 60; // convert minutes to seconds
+
+  function movePackage() {
+    progress++;
+    if (progress > steps) return;
+
+    // MOVE MARKER
+    const lat = start[0] + (end[0] - start[0]) * (progress / steps);
+    const lng = start[1] + (end[1] - start[1]) * (progress / steps);
+    marker.setLatLng([lat, lng]);
+
+    // Center map on moving marker
+    map.setView([lat, lng]);
+
+    // ETA UPDATE
+    const remaining = Math.max(0, totalMinutes - Math.floor(progress / 60));
+    document.getElementById("eta").innerText = remaining + " mins";
+  }
+
+  setInterval(movePackage, intervalTime);
+</script>
+
+</body>
+</html>
